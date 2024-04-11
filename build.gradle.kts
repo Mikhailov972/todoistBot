@@ -16,12 +16,14 @@ java {
 
 repositories {
     mavenCentral()
+    maven { setUrl("https://jitpack.io") }
 }
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation ("io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:6.1.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 

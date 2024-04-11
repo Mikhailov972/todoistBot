@@ -34,9 +34,11 @@ fun parseTextToTasks(text: String): Task {
 /**
  * Считает количество табов в строке
  * @param line строка
- * @return кол-во табов
+ * @return количество табов
  */
 private fun countTabs(line: String): Int {
+    if (line.length <= 4) return 0
+
     var startTab = 0
     var finishTab = 3
     val tab = "    "
