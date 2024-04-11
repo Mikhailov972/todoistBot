@@ -12,19 +12,19 @@ fun parseTextToTasks(text: String): Task {
 
     val tasks = mutableListOf<Task>()
 
-    val threeTasks = mutableMapOf<Int, Task>()
+    val taskTree = mutableMapOf<Int, Task>()
 
     text.split("\n").forEach {
         val currentCountSpaces = countTabs(it)
         if (currentCountSpaces == 0) {
-            threeTasks.clear()
+            taskTree.clear()
             val task = Task(it.trim(), mutableListOf())
-            threeTasks[currentCountSpaces] = task
+            taskTree[currentCountSpaces] = task
             tasks.add(task)
         } else {
             val task = Task(it.trim(), mutableListOf())
-            threeTasks[currentCountSpaces] = task
-            threeTasks[currentCountSpaces - 1]!!.children.add(task)
+            taskTree[currentCountSpaces] = task
+            taskTree[currentCountSpaces - 1]!!.children.add(task)
         }
     }
 
