@@ -6,5 +6,7 @@ data class TaskRequest(
     @JsonProperty(value = "content")
     val title: String,
     @JsonProperty(value = "parent_id")
-    val parentId: Long?
+    val parentId: Long?,
+    @JsonProperty(value = "labels")
+    val labels: Set<String> = emptySet()
 )

@@ -8,13 +8,13 @@ import org.springframework.stereotype.Service
 @Service
 class TodoistService(private val todoistClientApi: TodoistClientApi) {
 
-    fun createTasks(task: Task, parentId: Long? = null) {
-        val taskRequest = TaskRequest(title = task.title, parentId = parentId)
+    fun createTasks(task: Task, parentId: Long? = null, labels: Set<String>) {
+        val taskRequest = TaskRequest(title = task.title, parentId = parentId, labels = labels)
         val currentTaskId = todoistClientApi.createTask(taskRequest).getOrNull()!!.id
 
         if (task.children.isNotEmpty()) {
             task.children.forEach {
-                createTasks(it, currentTaskId)
+                createTasks(it, currentTaskId, labels)
             }
         }
     }
