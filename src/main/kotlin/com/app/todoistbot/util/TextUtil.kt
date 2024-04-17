@@ -41,14 +41,26 @@ private fun countTabs(line: String): Int {
 
     var startTab = 0
     var finishTab = 3
-    val tab = "    "
 
     var count = 0
-    while (line.substring(IntRange(startTab, finishTab)) == tab) {
+    while (line.hasTab(startTab, finishTab)) {
+        println(line)
         startTab += 4
         finishTab += 4
         count += 1
     }
 
     return count
+}
+
+/**
+ * Проверяет есть ли отступы в строке
+ * @param startTab начала диапазона
+ * @param finishTab конец диапазона
+ * @return true, если отступы есть
+ */
+private fun String.hasTab(startTab: Int, finishTab: Int): Boolean {
+    return runCatching {
+        return this.substring(IntRange(startTab, finishTab)) == "    "
+    }.getOrDefault(false)
 }

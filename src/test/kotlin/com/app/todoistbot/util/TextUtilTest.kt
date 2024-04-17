@@ -70,4 +70,26 @@ class TextUtilTest {
 
         Assertions.assertEquals(expected, parseTextToTasks(text))
     }
+
+    @Test
+    fun `when line is short after spaces`() {
+        val text = """
+    Руководство создания приложений под Android
+        Глава 3. Контейнеры компоновки
+            Box
+        """.trimIndent()
+
+        val task = Task(
+            title = "Глава 3. Контейнеры компоновки",
+            children = mutableListOf(
+                Task(
+                    title = "Box",
+                    children = mutableListOf()
+                ),
+            )
+
+        )
+        val expected = Task("Руководство создания приложений под Android", mutableListOf(task))
+        Assertions.assertEquals(expected, parseTextToTasks(text))
+    }
 }
