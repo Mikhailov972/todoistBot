@@ -44,7 +44,6 @@ private fun countTabs(line: String): Int {
 
     var count = 0
     while (line.hasTab(startTab, finishTab)) {
-        println(line)
         startTab += 4
         finishTab += 4
         count += 1
