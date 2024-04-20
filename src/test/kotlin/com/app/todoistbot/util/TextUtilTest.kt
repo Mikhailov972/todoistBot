@@ -6,8 +6,16 @@ import org.junit.jupiter.api.Test
 
 class TextUtilTest {
 
+    /**
+     * Проверяем, что задачу распарсили верно
+     *
+     * Given: Дерево задач в текстовом виде
+     * When: Парсим задачу
+     * Then: Убеждаемся, что распарсили верно
+     */
     @Test
     fun `happy path`() {
+        // --- Given ---
         val text = """
             Название задачи
                 1. Заголовок
@@ -68,15 +76,24 @@ class TextUtilTest {
 
         val expected = Task("Название задачи", mutableListOf(firstParentTask, secondParentTask))
 
+        // --- When / Then ---
         Assertions.assertEquals(expected, parseTextToTasks(text))
     }
 
+    /**
+     * Проверяем, что нет ошибок, если название задачи короткое и после нескольких табов
+     *
+     * Given: Дерево задач в текстовом виде
+     * When: Парсим задачу
+     * Then: Убеждаемся, что распарсили без ошибок
+     */
     @Test
     fun `when line is short after spaces`() {
+        // --- Given ---
         val text = """
-    Руководство создания приложений под Android
-        Глава 3. Контейнеры компоновки
-            Box
+            Руководство создания приложений под Android
+                Глава 3. Контейнеры компоновки
+                    Box
         """.trimIndent()
 
         val task = Task(
@@ -90,6 +107,8 @@ class TextUtilTest {
 
         )
         val expected = Task("Руководство создания приложений под Android", mutableListOf(task))
+
+        // --- When / Then ---
         Assertions.assertEquals(expected, parseTextToTasks(text))
     }
 }
