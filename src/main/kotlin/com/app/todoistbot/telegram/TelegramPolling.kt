@@ -9,6 +9,7 @@ import com.github.kotlintelegrambot.bot
 import com.github.kotlintelegrambot.dispatch
 import com.github.kotlintelegrambot.dispatcher.message
 import com.github.kotlintelegrambot.entities.ChatId
+import com.github.kotlintelegrambot.entities.ParseMode
 import com.github.kotlintelegrambot.extensions.filters.Filter
 import com.github.kotlintelegrambot.logging.LogLevel
 import java.net.URL
@@ -38,22 +39,38 @@ class TelegramPolling(
                         null,
                         setOf("YouTube")
                     )
-                ).getOrThrow().id
+                ).getOrThrow()
 
                 playlistDto.items.forEach {
-                    todoistClientApi.createTask(TaskRequest("[${it.title}](${it.url})", parentId))
+                    todoistClientApi.createTask(TaskRequest("[${it.title}](${it.url})", parentId.id))
                 }
-                bot.sendMessage(ChatId.fromId(message.chat.id), text = "Плейлист ${playlistDto.title} добавлен!")
+                bot.sendMessage(
+                    parseMode = ParseMode.MARKDOWN,
+                    chatId = ChatId.fromId(message.chat.id),
+                    text = "Плейлист ${createTextLink(playlistDto.title, parentId.url)} добавлен!",
+                    disableWebPagePreview = true,
+
+                )
                 update.consume()
             }
             message(baseFilter) {
                 val task = parseTextToTasks(message.text!!)
-                todoistService.createTasks(task, labels = setOf())
-                bot.sendMessage(ChatId.fromId(message.chat.id), text = "Задача ${task.title} добавлена!")
+                val responseTask = todoistService.createTasks(task, labels = setOf())
+                bot.sendMessage(
+                    parseMode = ParseMode.MARKDOWN,
+                    chatId = ChatId.fromId(message.chat.id),
+                    text = "Задача ${createTextLink(task.title, responseTask.url)} добавлена!",
+                    disableWebPagePreview = true,
+                )
                 update.consume()
             }
 
         }
         logLevel = LogLevel.All()
     }.startPolling()
+
+    /**
+     * Создаёт ссылку в формате Markdown
+     */
+    private fun createTextLink(text: String, url: String) = "[$text]($url)"
 }

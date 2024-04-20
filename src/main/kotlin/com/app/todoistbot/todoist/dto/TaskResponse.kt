@@ -8,5 +8,7 @@ data class TaskResponse(
     @JsonProperty(value = "id")
     val id: Long,
     @JsonProperty(value = "parent_id")
-    val parentId: Long?
+    val parentId: Long?,
+    @JsonProperty(value = "url")
+    val url: String,
 )
