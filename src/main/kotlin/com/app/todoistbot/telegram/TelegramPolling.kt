@@ -12,8 +12,8 @@ import com.github.kotlintelegrambot.entities.ChatId
 import com.github.kotlintelegrambot.entities.ParseMode
 import com.github.kotlintelegrambot.extensions.filters.Filter
 import com.github.kotlintelegrambot.logging.LogLevel
-import java.net.URL
 import org.springframework.stereotype.Service
+import java.net.URL
 
 @Service
 class TelegramPolling(
@@ -25,11 +25,13 @@ class TelegramPolling(
 
     val bot = bot {
         token = telegramConfig.apiKey
+
         dispatch {
-            val baseFilter = Filter.User(userId = telegramConfig.userId).and(Filter.Text)
+            val userFilter = Filter.User(userId = telegramConfig.userId)
+            val documentIsNotNullFilter = Filter.Custom { this.document != null }
             val youTubeFilter = Filter.Custom { runCatching { URL(this.text) }.isSuccess }
 
-            message(baseFilter.and(youTubeFilter)) {
+            message(userFilter.and(youTubeFilter)) {
                 val playlistId = message.text!!.substringAfter("=").substringBefore("&")
                 val playlistDto = youtubeService.getPlaylist(playlistId)
 
@@ -50,11 +52,13 @@ class TelegramPolling(
                     text = "Плейлист ${createTextLink(playlistDto.title, parentId.url)} добавлен!",
                     disableWebPagePreview = true,
 
-                )
+                    )
                 update.consume()
             }
-            message(baseFilter) {
-                val task = parseTextToTasks(message.text!!)
+
+            message(userFilter.and(documentIsNotNullFilter)) {
+                val fileId = this.message.document!!.fileId
+                val task = parseTextToTasks(this.bot.downloadFileBytes(fileId)!!.toString(Charsets.UTF_8))
                 val responseTask = todoistService.createTasks(task, labels = setOf())
                 bot.sendMessage(
                     parseMode = ParseMode.MARKDOWN,
@@ -68,6 +72,7 @@ class TelegramPolling(
         }
         logLevel = LogLevel.All()
     }.startPolling()
+
 
     /**
      * Создаёт ссылку в формате Markdown
