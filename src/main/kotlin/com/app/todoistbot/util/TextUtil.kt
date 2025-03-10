@@ -12,7 +12,7 @@ fun parseTextToTasks(text: String): Task {
 
     val taskTree = mutableMapOf<Int, Task>()
 
-    text.split("\n").forEach {
+    text.trim().split("\n").forEach {
 
         val currentCountSpaces = it.takeWhile { s -> s == ' ' }.length.div(4)
 

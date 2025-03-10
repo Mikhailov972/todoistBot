@@ -8,13 +8,14 @@ import com.app.todoistbot.util.parseTextToTasks
 import com.app.todoistbot.youtube.service.YoutubeService
 import com.github.kotlintelegrambot.bot
 import com.github.kotlintelegrambot.dispatch
+import com.github.kotlintelegrambot.dispatcher.handlers.MessageHandlerEnvironment
 import com.github.kotlintelegrambot.dispatcher.message
 import com.github.kotlintelegrambot.entities.ChatId
 import com.github.kotlintelegrambot.entities.ParseMode
 import com.github.kotlintelegrambot.extensions.filters.Filter
 import com.github.kotlintelegrambot.logging.LogLevel
+import java.net.URI
 import org.springframework.stereotype.Service
-import java.net.URL
 
 @Service
 class TelegramPolling(
@@ -31,7 +32,7 @@ class TelegramPolling(
         dispatch {
             val userFilter = Filter.User(userId = telegramConfig.userId)
             val documentIsNotNullFilter = Filter.Custom { this.document != null }
-            val youTubeFilter = Filter.Custom { runCatching { URL(this.text) }.isSuccess }
+            val youTubeFilter = Filter.Custom { runCatching { URI(this.text!!) }.isSuccess }
 
             message(userFilter.and(youTubeFilter)) {
                 val playlistId = message.text!!.substringAfter("=").substringBefore("&")
@@ -63,50 +64,12 @@ class TelegramPolling(
                 val file = this.bot.downloadFileBytes(fileId)!!.toString(Charsets.UTF_8)
 
                 val textData = textDataValidator.validate(file)
-
-                textData.onSuccess {
-                    val task = parseTextToTasks(textData.getOrNull()!!)
-                    val responseTask = todoistService.createTasks(task, labels = setOf())
-                    bot.sendMessage(
-                        parseMode = ParseMode.MARKDOWN,
-                        chatId = ChatId.fromId(message.chat.id),
-                        text = "Задача ${createTextLink(task.title, responseTask.url)} добавлена!",
-                        disableWebPagePreview = true,
-                    )
-                    update.consume()
-                }.onFailure {
-                    bot.sendMessage(
-                        parseMode = ParseMode.MARKDOWN,
-                        chatId = ChatId.fromId(message.chat.id),
-                        text = "${it.message}",
-                        disableWebPagePreview = true,
-                    )
-                    update.consume()
-                }
+                handleTextData(this, textData)
             }
 
             message(userFilter.and(Filter.Text)) {
                 val textData = textDataValidator.validate(message.text!!)
-
-                textData.onSuccess {
-                    val task = parseTextToTasks(textData.getOrNull()!!)
-                    val responseTask = todoistService.createTasks(task, labels = setOf())
-                    bot.sendMessage(
-                        parseMode = ParseMode.MARKDOWN,
-                        chatId = ChatId.fromId(message.chat.id),
-                        text = "Задача ${createTextLink(task.title, responseTask.url)} добавлена!",
-                        disableWebPagePreview = true,
-                    )
-                    update.consume()
-                }.onFailure {
-                    bot.sendMessage(
-                        parseMode = ParseMode.MARKDOWN,
-                        chatId = ChatId.fromId(message.chat.id),
-                        text = "${it.message}",
-                        disableWebPagePreview = true,
-                    )
-                    update.consume()
-                }
+                handleTextData(this, textData)
             }
 
         }
@@ -118,4 +81,26 @@ class TelegramPolling(
      * Создаёт ссылку в формате Markdown
      */
     private fun createTextLink(text: String, url: String) = "[$text]($url)"
+
+    private fun handleTextData(messageHandlerEnvironment: MessageHandlerEnvironment, textData: Result<String>) {
+        textData.onSuccess {
+            val task = parseTextToTasks(textData.getOrNull()!!)
+            val responseTask = todoistService.createTasks(task, labels = setOf())
+            messageHandlerEnvironment.bot.sendMessage(
+                parseMode = ParseMode.MARKDOWN,
+                chatId = ChatId.fromId(messageHandlerEnvironment.message.chat.id),
+                text = "Задача ${createTextLink(task.title, responseTask.url)} добавлена!",
+                disableWebPagePreview = true,
+            )
+            messageHandlerEnvironment.update.consume()
+        }.onFailure {
+            messageHandlerEnvironment.bot.sendMessage(
+                parseMode = ParseMode.MARKDOWN,
+                chatId = ChatId.fromId(messageHandlerEnvironment.message.chat.id),
+                text = "${it.message}",
+                disableWebPagePreview = true,
+            )
+            messageHandlerEnvironment.update.consume()
+        }
+    }
 }

@@ -1,0 +1,8 @@
+app:
+  todoist:
+    api-key: ${TODOIST_API_KEY}
+  telegram:
+    user-id: 1234567890
+    api-key: ${TELEGRAM_API_KEY}
+  youtube:
+    api-key: ${YOUTUBE_API_KEY}

@@ -1,0 +1,12 @@
+logging:
+  level:
+    org.springframework.web.client.DefaultRestClient: DEBUG
+
+app:
+  todoist:
+    api-key: ${TODOIST_API_KEY}
+  telegram:
+    user-id: ${TELEGRAM_USER_ID}
+    api-key: ${TELEGRAM_API_KEY}
+  youtube:
+    api-key: ${YOUTUBE_API_KEY}
