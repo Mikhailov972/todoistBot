@@ -85,6 +85,30 @@ class TelegramPolling(
                 }
             }
 
+            message(userFilter.and(Filter.Text)) {
+                val textData = textDataValidator.validate(message.text!!)
+
+                textData.onSuccess {
+                    val task = parseTextToTasks(textData.getOrNull()!!)
+                    val responseTask = todoistService.createTasks(task, labels = setOf())
+                    bot.sendMessage(
+                        parseMode = ParseMode.MARKDOWN,
+                        chatId = ChatId.fromId(message.chat.id),
+                        text = "Задача ${createTextLink(task.title, responseTask.url)} добавлена!",
+                        disableWebPagePreview = true,
+                    )
+                    update.consume()
+                }.onFailure {
+                    bot.sendMessage(
+                        parseMode = ParseMode.MARKDOWN,
+                        chatId = ChatId.fromId(message.chat.id),
+                        text = "${it.message}",
+                        disableWebPagePreview = true,
+                    )
+                    update.consume()
+                }
+            }
+
         }
         logLevel = LogLevel.All()
     }.startPolling()
