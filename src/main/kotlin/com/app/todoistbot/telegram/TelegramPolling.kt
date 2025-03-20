@@ -1,5 +1,6 @@
 package com.app.todoistbot.telegram
 
+import com.app.todoistbot.telegram.validator.TextDataValidator
 import com.app.todoistbot.todoist.TodoistClientApi
 import com.app.todoistbot.todoist.dto.TaskRequest
 import com.app.todoistbot.todoist.service.TodoistService
@@ -20,7 +21,8 @@ class TelegramPolling(
     private val telegramConfig: TelegramConfig,
     private val todoistService: TodoistService,
     private val youtubeService: YoutubeService,
-    private val todoistClientApi: TodoistClientApi
+    private val todoistClientApi: TodoistClientApi,
+    private val textDataValidator: TextDataValidator
 ) {
 
     val bot = bot {
@@ -58,15 +60,29 @@ class TelegramPolling(
 
             message(userFilter.and(documentIsNotNullFilter)) {
                 val fileId = this.message.document!!.fileId
-                val task = parseTextToTasks(this.bot.downloadFileBytes(fileId)!!.toString(Charsets.UTF_8))
-                val responseTask = todoistService.createTasks(task, labels = setOf())
-                bot.sendMessage(
-                    parseMode = ParseMode.MARKDOWN,
-                    chatId = ChatId.fromId(message.chat.id),
-                    text = "Задача ${createTextLink(task.title, responseTask.url)} добавлена!",
-                    disableWebPagePreview = true,
-                )
-                update.consume()
+                val file = this.bot.downloadFileBytes(fileId)!!.toString(Charsets.UTF_8)
+
+                val textData = textDataValidator.validate(file)
+
+                textData.onSuccess {
+                    val task = parseTextToTasks(textData.getOrNull()!!)
+                    val responseTask = todoistService.createTasks(task, labels = setOf())
+                    bot.sendMessage(
+                        parseMode = ParseMode.MARKDOWN,
+                        chatId = ChatId.fromId(message.chat.id),
+                        text = "Задача ${createTextLink(task.title, responseTask.url)} добавлена!",
+                        disableWebPagePreview = true,
+                    )
+                    update.consume()
+                }.onFailure {
+                    bot.sendMessage(
+                        parseMode = ParseMode.MARKDOWN,
+                        chatId = ChatId.fromId(message.chat.id),
+                        text = "${it.message}",
+                        disableWebPagePreview = true,
+                    )
+                    update.consume()
+                }
             }
 
         }
